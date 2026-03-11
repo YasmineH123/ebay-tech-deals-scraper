@@ -1,0 +1,32 @@
+name: Run eBay Scraper
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'   
+
+jobs:
+  scrape-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraping script
+        run: |
+          python scraper.py
+          pip install selenium pandas webdriver-manager
+
+      - name: Commit updated CSV
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add ebay_tech_deals.csv
+          git commit -m "Update scraped data" || echo "No changes"
+          git push
