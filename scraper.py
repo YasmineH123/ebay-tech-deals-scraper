@@ -71,18 +71,18 @@ while True:
         break
     last_height = new_height
 
-products = driver.find_elements(By.XPATH, "//div[@itemscope='itemscope']")
+products = driver.find_elements(By.CSS_SELECTOR, "div.dne-itemtile")
 
 data = []
 for product in products:
     try:
-        title = product.find_element(By.XPATH, "//span[@itemprop = 'name']" ).text
+        title = product.find_element(By.XPATH, ".//span[@itemprop = 'name']" ).text
     except:
         title = "N/A"
-    timestamp = datetime.now()
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
         # use itemprop = "price"
-        price = product.find_element(By.XPATH, "//span[@itemprop = 'price']" ).text
+        price = product.find_element(By.XPATH, ".//span[@itemprop = 'price']" ).text
     except:
         price = "N/A"
     try:
@@ -94,7 +94,7 @@ for product in products:
     except:
         shipping = "N/A"
     try:
-        item_url = product.find_element(By.XPATH, "//a[@itemprop = 'url']" ).get_attribute("href")
+        item_url = product.find_element(By.XPATH, ".//a[@itemprop = 'url']" ).get_attribute("href")
     except:
         item_url = "N/A"
 
@@ -108,12 +108,18 @@ for product in products:
     })
     print(f"Extracted: {title}")
 
-with open("ebay_tech_deals.csv", "w", newline="", encoding="utf-8") as csvfile:
-    fieldnames = ["title", "timestamp", "price", "original_price", "shipping", "item_url"]
+import os
+
+file_exists = os.path.isfile("ebay_tech_deals.csv")
+
+with open("ebay_tech_deals.csv", "a", newline="", encoding="utf-8") as csvfile:
+    fieldnames = ["title","timestamp","price","original_price","shipping","item_url"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-    writer.writeheader()
-    for row in data:
-        writer.writerow(row)
+
+    if not file_exists:
+        writer.writeheader()
+
+    writer.writerows(data)
 
 driver.quit()
 

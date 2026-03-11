@@ -16,12 +16,13 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser
+          pip install selenium pandas webdriver-manager fake-useragent
 
       - name: Run scraping script
-        run: |
-          python scraper.py
-          pip install selenium pandas webdriver-manager
+        run: python scraper.py
 
       - name: Commit updated CSV
         run: |
