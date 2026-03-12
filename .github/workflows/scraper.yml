@@ -2,23 +2,29 @@ name: Run eBay Scraper
 
 on:
   schedule:
-    - cron: '0 */3 * * *'   
+    - cron: '0 */3 * * *'
+  workflow_dispatch:   
+
+permissions:
+  contents: write
 
 jobs:
   scrape-job:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y chromium-browser
+          sudo apt-get install -y chromium-browser chromium-chromedriver
           pip install selenium pandas webdriver-manager fake-useragent
 
       - name: Run scraping script
@@ -28,6 +34,7 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
+          git pull
           git add ebay_tech_deals.csv
           git commit -m "Update scraped data" || echo "No changes"
           git push

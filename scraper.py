@@ -45,13 +45,17 @@ from selenium.webdriver.chrome.options import Options
 from datetime import datetime
 import time
 import csv
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 
 options = Options()
+options.binary_location = "/usr/bin/chromium-browser"
 options.add_argument("--headless=new")
 options.add_argument("--window-size=1920,1080")
 options.add_argument("--no-sandbox")
-driver = webdriver.Chrome(options=options)
-driver.maximize_window()
+options.add_argument("--disable-dev-shm-usage")
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=options)
 
 driver.get("https://www.ebay.com/globaldeals/tech")
 # Task 1:
@@ -61,7 +65,10 @@ driver.get("https://www.ebay.com/globaldeals/tech")
 # save to csv file the data "ebay_tech_deals.csv"
 # don't impose limit on nb of products to extract
 
-time.sleep(5)
+WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.CSS_SELECTOR, "div.dne-itemtile"))
+)
+
 last_height = driver.execute_script("return document.body.scrollHeight")
 while True:
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
