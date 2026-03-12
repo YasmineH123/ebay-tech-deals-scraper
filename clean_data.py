@@ -13,8 +13,11 @@ df["original_price"] = df["original_price"].replace("N/A", None)
 df["original_price"] = df["original_price"].replace(r'^\s*$', None, regex=True)
 df["original_price"] = df["original_price"].fillna(df["price"])
 
+df["shipping"] = df["shipping"].fillna("Shipping info unavailable")
 df["shipping"] = df["shipping"].replace("N/A", "Shipping info unavailable")
-df["shipping"] = df["shipping"].replace(r'^\s*$', "Shipping info unavailable", regex=True)
+df["shipping"] = df["shipping"].apply(
+    lambda x: "Shipping info unavailable" if str(x).strip() == "" else x
+)
 
 df["price"] = pd.to_numeric(df["price"], errors="coerce")
 df["original_price"] = pd.to_numeric(df["original_price"], errors="coerce")
