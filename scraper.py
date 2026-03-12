@@ -89,14 +89,14 @@ def save_to_csv(data):
         "timestamp", "title", "price", "original_price", "shipping", "item_url"
     ])
 
-    if not os.path.exists(file_name):
+    if not os.path.exists(file_name) or os.path.getsize(file_name) == 0:
         new_rows.to_csv(file_name, index=False)
     else:
         existing = pd.read_csv(file_name, dtype=str)
         existing = existing[existing["timestamp"] != "timestamp"]  # drop accidental header rows
         df = pd.concat([existing, new_rows], ignore_index=True)
         df.to_csv(file_name, index=False)
-
+        
 if __name__ == "__main__":
     print("Scraping eBay tech deals...")
     scraped_data = scrape_ebay_data()  # now properly defined
