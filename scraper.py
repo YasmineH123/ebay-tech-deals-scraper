@@ -35,101 +35,118 @@
 # Solution:
 
 # task 1:
-
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from datetime import datetime
 import time
-import csv
 from fake_useragent import UserAgent
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 
-# Set up Selenium options
-options = Options()
-options.add_argument("--headless")  # Enable headless mode for GitHub Actions
-options.add_argument("--disable-gpu")
-options.add_argument("--window-size=1920,1080")
+def scrape_ebay_data():
+    """Scrape eBay tech deals and return as list of dicts."""
+    # Set up Selenium options
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920,1080")
 
-# Rotate User-Agent to prevent detection
-ua = UserAgent()
-options.add_argument(f"user-agent={ua.random}")
+    # Rotate User-Agent
+    ua = UserAgent()
+    options.add_argument(f"user-agent={ua.random}")
 
-# Set up ChromeDriver using webdriver_manager
-service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service, options=options)
+    # ChromeDriver setup
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
 
-driver.get("https://www.ebay.com/globaldeals/tech")
+    driver.get("https://www.ebay.com/globaldeals/tech")
 
-WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located((By.CSS_SELECTOR, "div.dne-itemtile"))
-)
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "div.dne-itemtile"))
+    )
 
-last_height = driver.execute_script("return document.body.scrollHeight")
-while True:
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(2)
-    new_height = driver.execute_script("return document.body.scrollHeight")
-    if new_height == last_height:
-        break
-    last_height = new_height
+    # Scroll to load all items
+    last_height = driver.execute_script("return document.body.scrollHeight")
+    while True:
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2)
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
 
-products = driver.find_elements(By.CSS_SELECTOR, "div.dne-itemtile")
+    # Extract product data
+    products = driver.find_elements(By.CSS_SELECTOR, "div.dne-itemtile")
+    data = []
+    for product in products:
+        try:
+            title = product.find_element(By.XPATH, ".//span[@itemprop='name']").text
+        except:
+            title = "N/A"
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            price = product.find_element(By.XPATH, ".//span[@itemprop='price']").text
+        except:
+            price = "N/A"
+        try:
+            original_price = product.find_element(By.CSS_SELECTOR, "span.itemtile-price-strikethrough").text
+        except:
+            original_price = "N/A"
+        try:
+            shipping = product.find_element(By.CSS_SELECTOR, "span.dne-itemtile-delivery").text
+        except:
+            shipping = "N/A"
+        try:
+            item_url = product.find_element(By.XPATH, ".//a[@itemprop='url']").get_attribute("href")
+        except:
+            item_url = "N/A"
 
-data = []
-for product in products:
+        data.append({
+            "title": title,
+            "timestamp": timestamp,
+            "price": price,
+            "original_price": original_price,
+            "shipping": shipping,
+            "item_url": item_url
+        })
+        print(f"Extracted: {title}")
+
+    driver.quit()
+    return data
+
+def save_to_csv(data):
+    """Save scraped eBay data to CSV."""
+    file_name = "ebay_tech_deals.csv"
+
     try:
-        title = product.find_element(By.XPATH, ".//span[@itemprop = 'name']" ).text
-    except:
-        title = "N/A"
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    try:
-        # use itemprop = "price"
-        price = product.find_element(By.XPATH, ".//span[@itemprop = 'price']" ).text
-    except:
-        price = "N/A"
-    try:
-        original_price = product.find_element(By.CSS_SELECTOR, "span.itemtile-price-strikethrough").text
-    except:
-        original_price = "N/A"
-    try:
-        shipping = product.find_element(By.CSS_SELECTOR, "span.dne-itemtile-delivery").text
-    except:
-        shipping = "N/A"
-    try:
-        item_url = product.find_element(By.XPATH, ".//a[@itemprop = 'url']" ).get_attribute("href")
-    except:
-        item_url = "N/A"
+        df = pd.read_csv(file_name)
+    except FileNotFoundError:
+        df = pd.DataFrame(columns=[
+            "title", "timestamp", "price", "original_price", "shipping", "item_url"
+        ])
 
-    data.append({
-        "title": title,
-        "timestamp": timestamp,
-        "price": price,
-        "original_price": original_price,
-        "shipping": shipping,
-        "item_url": item_url
-    })
-    print(f"Extracted: {title}")
+    # Make a DataFrame for the new data rows
+    new_rows = pd.DataFrame(data)
 
-import os
+    # Append the new rows
+    df = pd.concat([df, new_rows], ignore_index=True)
 
-file_exists = os.path.isfile("ebay_tech_deals.csv")
+    # Save back to CSV
+    df.to_csv(file_name, index=False)
 
-with open("ebay_tech_deals.csv", "a", newline="", encoding="utf-8") as csvfile:
-    fieldnames = ["title","timestamp","price","original_price","shipping","item_url"]
-    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+if __name__ == "__main__":
+    print("Scraping eBay tech deals...")
+    scraped_data = scrape_ebay_data()  # now properly defined
 
-    if not file_exists:
-        writer.writeheader()
-
-    writer.writerows(data)
-
-driver.quit()
-
+    if scraped_data:
+        save_to_csv(scraped_data)
+        print("Data saved to ebay_tech_deals.csv")
+    else:
+        print("Failed to scrape data.")
 
 # Task 3:
 # Create a Python script (clean_data.py)
