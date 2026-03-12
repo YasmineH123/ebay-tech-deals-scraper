@@ -45,25 +45,25 @@ from selenium.webdriver.chrome.options import Options
 from datetime import datetime
 import time
 import csv
+from fake_useragent import UserAgent
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 
+# Set up Selenium options
 options = Options()
-options.binary_location = "/usr/bin/chromium-browser"
-options.add_argument("--headless=new")
+options.add_argument("--headless")  # Enable headless mode for GitHub Actions
+options.add_argument("--disable-gpu")
 options.add_argument("--window-size=1920,1080")
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
+
+# Rotate User-Agent to prevent detection
+ua = UserAgent()
+options.add_argument(f"user-agent={ua.random}")
+
+# Set up ChromeDriver using webdriver_manager
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=options)
 
 driver.get("https://www.ebay.com/globaldeals/tech")
-# Task 1:
-# scraping la ebay
-# lazy loading of all products listing
-# extract title timestamp price orgininal_price shipping item_url of products
-# save to csv file the data "ebay_tech_deals.csv"
-# don't impose limit on nb of products to extract
 
 WebDriverWait(driver, 10).until(
     EC.presence_of_element_located((By.CSS_SELECTOR, "div.dne-itemtile"))
