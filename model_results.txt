@@ -1,0 +1,45 @@
+=== Model 1: Logistic Regression (Baseline) ===
+Accuracy:  0.9977
+Precision: 0.9962
+Recall:    1.0000
+F1 Score:  0.9981
+Confusion Matrix:
+[[323   2]
+ [  0 527]]
+
+=== Model 2: Logistic Regression + Features ===
+Accuracy:  0.9988
+Precision: 0.9981
+Recall:    1.0000
+F1 Score:  0.9991
+Confusion Matrix:
+[[324   1]
+ [  0 527]]
+
+=== Model 3: Decision Tree ===
+Accuracy:  1.0000
+Precision: 1.0000
+Recall:    1.0000
+F1 Score:  1.0000
+Confusion Matrix:
+[[325   0]
+ [  0 527]]
+
+-- BEFORE balancing --
+=== Decision Tree (original) ===
+Accuracy:  1.0000
+Precision: 1.0000
+Recall:    1.0000
+F1 Score:  1.0000
+Confusion Matrix:
+[[325   0]
+ [  0 527]]
+-- AFTER balancing --
+=== Decision Tree (balanced) ===
+Accuracy:  1.0000
+Precision: 1.0000
+Recall:    1.0000
+F1 Score:  1.0000
+Confusion Matrix:
+[[381   0]
+ [  0 380]]
